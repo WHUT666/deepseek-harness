@@ -312,7 +312,23 @@ interface SurfaceIntent {
 }
 ```
 
-对 `SurfaceEventType` 事件必填：每个产生消息的事件都必须声明它如何加入 surface（派生模型历史的唯一来源）。面向人类的 transcript（文本记录）是另一个投影，读取的是日志中追加来源的事件，因为 surface 会有意遮蔽替换所概括的范围（见 [dsh-session](../../packages/core/session/README.md) 的 `isAppendSurfaceEvent`）。非 surface 类型在编译期拒绝此参数。
+```ts type-equiv
+/**
+ * Optional envelope fields {@link Session.append} accepts on every event type.
+ * Surface events still require {@link SurfaceIntent}; log-only events may pass
+ * only this object.
+ */
+interface SessionAppendOptions {
+  /**
+   * Marks a purely informational event a reader may skip when it does not
+   * recognize `type`. Writers set `true` only when losing the record cannot
+   * change how the rest of the log is reconstructed.
+   */
+  ignorable?: true
+}
+```
+
+对 `SurfaceEventType` 事件必填：每个产生消息的事件都必须声明它如何加入 surface（派生模型历史的唯一来源）。面向人类的 transcript（文本记录）是另一个投影，读取的是日志中追加来源的事件，因为 surface 会有意遮蔽替换所概括的范围（见 [dsh-session](../../packages/core/session/README.md) 的 `isAppendSurfaceEvent`）。非 surface 类型在编译期拒绝此参数。`Session.append` 在每一种类型上也接受 {@link SessionAppendOptions}，以便写入方把纯信息记录标为 `ignorable`。
 
 只有 `assistant/message` 可以携带存在但为空的 `sourceEventSeqs`；字段不存在时，该事件没有记录这条消息由哪些早期事件产生，但提供方仍可能发出过分片。
 
@@ -448,14 +464,14 @@ declare class Session {
    *
    * @param type - The event type (key of {@link SessionEventMap}).
    * @param data - The event payload; must be JSON-serializable.
-   * @param opts - Surface metadata: `surfaceOp` controls how the event enters
-   *   the ordered surface; `sourceEventSeqs` lists the seq numbers of earlier
-   *   events this one derives from. REQUIRED for
-   *   {@link SurfaceEventType} events (every message-producing event must
+   * @param opts - Surface metadata plus optional envelope flags. `surfaceOp`
+   *   controls how the event enters the ordered surface; `sourceEventSeqs`
+   *   lists the seq numbers of earlier events this one derives from. REQUIRED
+   *   for {@link SurfaceEventType} events (every message-producing event must
    *   declare how it joins the surface, the sole source of derived model
-   *   history) and
-   *   rejected by the compiler for non-surface types like `turn/start` or
-   *   `assistant/chunk`.
+   *   history) and rejected by the compiler for non-surface types like
+   *   `turn/start` or `assistant/chunk`. `ignorable: true` marks a purely
+   *   informational record a reader may skip when it does not recognize `type`.
    * @returns the logged event — its assigned `seq`/`time` plus the SNAPSHOT of
    *   `data` that entered the log, so reading `event.data` back sees the logged
    *   value, never the caller's still-mutable input.
@@ -476,7 +492,9 @@ declare class Session {
   append<T extends SessionEventType>(
     type: T,
     data: SessionEventMap[T],
-    ...opts: T extends SurfaceEventType ? [opts: SurfaceIntent] : []
+    ...opts: T extends SurfaceEventType
+      ? [opts: SurfaceIntent & SessionAppendOptions]
+      : [opts?: SessionAppendOptions]
   ): SessionEvent<T>;
   /**
    * The {@link EpochHeader} in force after the log's last header event — the

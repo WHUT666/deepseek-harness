@@ -1088,6 +1088,13 @@ describe('Session', () => {
     ])
     expect(marked.events[0]?.ignorable).toBe(true)
   })
+
+  it('copies ignorable: true from append options onto the envelope', () => {
+    const session = Session.create(SessionId('append-ignorable'))
+    const event = session.append('turn/start', { turn: 1 }, { ignorable: true })
+    expect(event.ignorable).toBe(true)
+    expect(session.events[0]?.ignorable).toBe(true)
+  })
 })
 
 

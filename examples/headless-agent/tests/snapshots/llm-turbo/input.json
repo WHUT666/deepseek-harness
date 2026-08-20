@@ -1,0 +1,8 @@
+{
+  "steps": [
+    {
+      "op": "prompt",
+      "text": "select the majority turbo winner"
+    }
+  ]
+}

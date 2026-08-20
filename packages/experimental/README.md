@@ -8,5 +8,6 @@ This group contains prototypes and internal-only Cordis plugins that use the rep
 |---|---|---|
 | `agent-team/` | Implicit-root Agent Teams roster, durable peer mailbox, shared task DAG, and runtime coordination | `ctx.agentTeams` |
 | `tool-agent-team/` | Scoped model-facing Agent Teams tools and collaboration guidance | — |
+| `llm-turbo/` | Opt-in best-of-N loop-stream wrapper with majority vote and PPT verifier selection | — |
 
 The [subtree rules](AGENTS.md) define dependency isolation, release exclusion, and promotion.

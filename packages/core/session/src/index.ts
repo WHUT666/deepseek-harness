@@ -14,7 +14,7 @@ import type { Scoped } from '@deepseek-ai/dsh-scope'
 import type { Message } from '@deepseek-ai/dsh-llm'
 import { SESSION_FORMAT_VERSION, SessionId } from './types.ts'
 import type { TypertLookup } from '@deepseek-ai/dsh-typert-protocol'
-import type { CreateSessionOptions, EpochHeader, PrepareSessionOptions, RequestContext, SessionEvent, SessionEventMap, SessionEventType, SessionHeader, SurfaceIntent, SurfaceEventType } from './types.ts'
+import type { CreateSessionOptions, EpochHeader, PrepareSessionOptions, RequestContext, SessionAppendOptions, SessionEvent, SessionEventMap, SessionEventType, SessionHeader, SurfaceIntent, SurfaceEventType } from './types.ts'
 import { snapshotJsonValue } from './json.ts'
 import { deriveEventMessage, SurfaceManager } from './surface.ts'
 import type { SessionSurface } from './surface.ts'
@@ -576,14 +576,14 @@ export class Session {
    *
    * @param type - The event type (key of {@link SessionEventMap}).
    * @param data - The event payload; must be JSON-serializable.
-   * @param opts - Surface metadata: `surfaceOp` controls how the event enters
-   *   the ordered surface; `sourceEventSeqs` lists the seq numbers of earlier
-   *   events this one derives from. REQUIRED for
-   *   {@link SurfaceEventType} events (every message-producing event must
+   * @param opts - Surface metadata plus optional envelope flags. `surfaceOp`
+   *   controls how the event enters the ordered surface; `sourceEventSeqs`
+   *   lists the seq numbers of earlier events this one derives from. REQUIRED
+   *   for {@link SurfaceEventType} events (every message-producing event must
    *   declare how it joins the surface, the sole source of derived model
-   *   history) and
-   *   rejected by the compiler for non-surface types like `turn/start` or
-   *   `assistant/chunk`.
+   *   history) and rejected by the compiler for non-surface types like
+   *   `turn/start` or `assistant/chunk`. `ignorable: true` marks a purely
+   *   informational record a reader may skip when it does not recognize `type`.
    * @returns the logged event — its assigned `seq`/`time` plus the SNAPSHOT of
    *   `data` that entered the log, so reading `event.data` back sees the logged
    *   value, never the caller's still-mutable input.
@@ -604,12 +604,18 @@ export class Session {
   append<T extends SessionEventType>(
     type: T,
     data: SessionEventMap[T],
-    ...opts: T extends SurfaceEventType ? [opts: SurfaceIntent] : []
+    ...opts: T extends SurfaceEventType
+      ? [opts: SurfaceIntent & SessionAppendOptions]
+      : [opts?: SessionAppendOptions]
   ): SessionEvent<T> {
-    const surfaceOpts: SurfaceIntent | undefined = opts[0]
+    const extra = opts[0]
     const surfaceMetadata = {
-      ...surfaceOpts?.sourceEventSeqs === undefined ? {} : { sourceEventSeqs: surfaceOpts.sourceEventSeqs },
-      ...surfaceOpts?.surfaceOp === undefined ? {} : { surfaceOp: surfaceOpts.surfaceOp },
+      ...extra !== undefined && 'sourceEventSeqs' in extra && extra.sourceEventSeqs !== undefined
+        ? { sourceEventSeqs: extra.sourceEventSeqs }
+        : {},
+      ...extra !== undefined && 'surfaceOp' in extra && extra.surfaceOp !== undefined
+        ? { surfaceOp: extra.surfaceOp }
+        : {},
     }
     const dataSnapshot = snapshotJsonValue(data)
     if (dataSnapshot === undefined) {
@@ -630,6 +636,7 @@ export class Session {
       time: Date.now(),
       data: dataSnapshot,
       ...(surfaceMetadataSnapshot as { surfaceOp?: unknown; sourceEventSeqs?: unknown }),
+      ...extra?.ignorable === true ? { ignorable: true as const } : {},
     } as unknown as SessionEvent<T>)
     this.surfaceManager.validateNext(event as SessionEvent)
 
@@ -1029,7 +1036,6 @@ export class SessionStore extends Service {
       } catch (error: unknown) {
         // Preserve the listener's exact rejection value; flush is a caller-owned
         // failure boundary, and Cordis listeners may throw arbitrary values.
-        // oxlint-disable-next-line typescript/prefer-promise-reject-errors
         return Promise.reject(error)
       }
     }))

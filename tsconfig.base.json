@@ -103,6 +103,8 @@
       "@deepseek-ai/dsh-agent-loop/invariant": ["./packages/core/agent-loop/src/invariant.ts"],
       "@deepseek-ai/dsh-experimental-agent-team/invariant": ["./packages/experimental/agent-team/src/invariant.ts"],
       "@deepseek-ai/dsh-experimental-tool-agent-team/invariant": ["./packages/experimental/tool-agent-team/src/invariant.ts"],
+      "@deepseek-ai/dsh-experimental-llm-turbo/invariant": ["./packages/experimental/llm-turbo/src/invariant.ts"],
+      "@deepseek-ai/dsh-experimental-llm-turbo/types": ["./packages/experimental/llm-turbo/src/types.ts"],
       "@deepseek-ai/dsh-*/invariant": [
         "./packages/core/*/src/invariant.ts",
         "./packages/prompt/*/src/invariant.ts",
@@ -236,6 +238,7 @@
       "@deepseek-ai/dsh-sdk-jsonrpc-server": ["./packages/sdk/server/src"],
       "@deepseek-ai/dsh-experimental-agent-team": ["./packages/experimental/agent-team/src"],
       "@deepseek-ai/dsh-experimental-tool-agent-team": ["./packages/experimental/tool-agent-team/src"],
+      "@deepseek-ai/dsh-experimental-llm-turbo": ["./packages/experimental/llm-turbo/src"],
       "@deepseek-ai/dsh-*": [
         "./packages/core/*/src",
         "./packages/prompt/*/src",

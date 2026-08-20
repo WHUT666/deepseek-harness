@@ -90,7 +90,7 @@ export type SessionEvent<T extends SessionEventType = SessionEventType> = {
 }[T]
 ```
 
-Sources: [`packages/core/session/src/types.ts:340`](../packages/core/session/src/types.ts) · [`packages/core/session/src/types.ts:347`](../packages/core/session/src/types.ts) · [`packages/core/session/src/types.ts:376`](../packages/core/session/src/types.ts) · [`packages/core/session/src/types.ts:408`](../packages/core/session/src/types.ts)
+Sources: [`packages/core/session/src/types.ts:340`](../packages/core/session/src/types.ts) · [`packages/core/session/src/types.ts:347`](../packages/core/session/src/types.ts) · [`packages/core/session/src/types.ts:376`](../packages/core/session/src/types.ts) · [`packages/core/session/src/types.ts:422`](../packages/core/session/src/types.ts)
 
 ## Events
 
@@ -497,6 +497,53 @@ Source: [`packages/llm/llm-retry/src/types.ts:9`](../packages/llm/llm-retry/src/
 ```
 
 Source: [`packages/llm/llm-retry/src/types.ts:11`](../packages/llm/llm-retry/src/types.ts)
+
+<a id="llmturbo-candidates--log-only"></a>
+
+#### `llm/turbo-candidates` — log-only
+
+```ts persistence-catalog
+/**
+ * One loop step's gathered candidate actions before winner replay.
+ * Losing trajectories never become `assistant/chunk`.
+ */
+'llm/turbo-candidates': LlmTurboCandidatesEventData
+```
+
+Types: [LlmTurboCandidatesEventData](subsystems/llm-turbo.md)
+
+Source: [`packages/experimental/llm-turbo/src/types.ts:14`](../packages/experimental/llm-turbo/src/types.ts)
+
+<a id="llmturbo-progress--log-only"></a>
+
+#### `llm/turbo-progress` — log-only
+
+```ts persistence-catalog
+/**
+ * Post-hoc progress score of the winning action. May arrive after
+ * `assistant/message` and after the step closes.
+ */
+'llm/turbo-progress': LlmTurboProgressEventData
+```
+
+Types: [LlmTurboProgressEventData](subsystems/llm-turbo.md)
+
+Source: [`packages/experimental/llm-turbo/src/types.ts:23`](../packages/experimental/llm-turbo/src/types.ts)
+
+<a id="llmturbo-verdict--log-only"></a>
+
+#### `llm/turbo-verdict` — log-only
+
+```ts persistence-catalog
+/**
+ * Majority, PPT, or first-valid fallback verdict for one loop step.
+ */
+'llm/turbo-verdict': LlmTurboVerdictEventData
+```
+
+Types: [LlmTurboVerdictEventData](subsystems/llm-turbo.md)
+
+Source: [`packages/experimental/llm-turbo/src/types.ts:18`](../packages/experimental/llm-turbo/src/types.ts)
 
 ### `permission/*`
 

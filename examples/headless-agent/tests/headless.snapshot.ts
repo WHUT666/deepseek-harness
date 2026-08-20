@@ -33,6 +33,8 @@ const goalScenarioDir = join(snapshotsDir, 'goal-tools')
 const goalConfigPath = fileURLToPath(new URL('../goal.cordis.snapshot.yml', import.meta.url))
 const retryScenarioDir = join(snapshotsDir, 'provider-retry')
 const retryConfigPath = fileURLToPath(new URL('../retry.cordis.snapshot.yml', import.meta.url))
+const turboScenarioDir = join(snapshotsDir, 'llm-turbo')
+const turboConfigPath = fileURLToPath(new URL('../turbo.cordis.snapshot.yml', import.meta.url))
 const compactionScenarioDir = join(snapshotsDir, 'compaction-recovery')
 const compactionSessionFixture = join(compactionScenarioDir, 'session.jsonl')
 const compactionStreamExpected = join(compactionScenarioDir, 'stream-json.expected.jsonl')
@@ -321,6 +323,50 @@ describe('headless stream-json snapshots', () => {
           delayMs: 1,
           failure: { message: 'snapshot transient failure', code: 'RATE_LIMIT', status: 429 },
         })
+      },
+    })
+
+    expect(result.stderr).toBe('')
+    const normalized = normalizeHeadlessStream(result.stdout, runCwd)
+    if (refreshing) await writeFile(streamExpected, normalized)
+    expect(normalized).toBe(await readFile(streamExpected, 'utf8'))
+  }, LOADER_SMOKE_TEST_TIMEOUT_MS)
+
+  it('selects a majority turbo winner through the one-shot app', async () => {
+    const prompt = await scenarioPrompt(turboScenarioDir, 'llm-turbo')
+    const streamExpected = join(turboScenarioDir, 'stream-json.expected.jsonl')
+    let runCwd = ''
+    const result = await runLoaderSmoke({
+      label: 'llm-turbo headless stream-json snapshot',
+      tempDirPrefix: 'headless-snapshot-llm-turbo-',
+      binScript,
+      libBinScript: binScript,
+      configPath: turboConfigPath,
+      binArgs: [turboConfigPath, prompt],
+      tsconfigPath,
+      env: {
+        DSH_SNAPSHOT: 'replay',
+        NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
+      },
+      prepare: (cwd) => { runCwd = cwd },
+      inspect: async (cwd) => {
+        const logs = await persistedLogs(cwd)
+        expect(logs).toHaveLength(1)
+        const records = parseJsonl(logs[0]?.content ?? '')
+        const candidates = records.filter(record => record.type === 'llm/turbo-candidates')
+        const verdicts = records.filter(record => record.type === 'llm/turbo-verdict')
+        expect(candidates).toHaveLength(1)
+        expect(verdicts).toHaveLength(1)
+        expect(candidates[0]?.ignorable).toBe(true)
+        expect(verdicts[0]?.data).toMatchObject({
+          method: 'majority',
+          bestIndex: 0,
+        })
+        expect((candidates[0]?.data as { candidates?: { action?: string }[] })?.candidates?.map(row => row.action)).toEqual([
+          'TURBO_OK',
+          'TURBO_OK',
+          'TURBO_OTHER',
+        ])
       },
     })
 

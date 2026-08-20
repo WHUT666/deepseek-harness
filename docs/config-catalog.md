@@ -611,6 +611,81 @@ export interface Config {
 
 Source: [`packages/experimental/agent-team/src/types.ts:125`](../packages/experimental/agent-team/src/types.ts)
 
+<a id="deepseek-aidsh-experimental-llm-turbo"></a>
+
+## `@deepseek-ai/dsh-experimental-llm-turbo`
+
+Requires: `llm` · `sessions`
+
+```ts config-catalog
+/** Plugin config; every tunable is a field here. */
+export interface Config {
+  /** Concurrent unmarked loop samples. `1` (default) is a no-op. */
+  numCandidates?: number
+  /** When true, skip PPT if one formatted action appears more than `n/2` times. */
+  majorityVoting?: boolean
+  /** Required when `numCandidates > 1`. */
+  verifier?: VerifierConfig
+  /** Optional `agent/pre-step` plugin-instructions refinement. */
+  refinement?: RefinementConfig
+  /** Optional post-hoc progress scoring after winner replay starts. */
+  progressMonitor?: ProgressMonitorConfig
+}
+
+/** Verifier block required when `numCandidates > 1`. */
+export interface VerifierConfig {
+  /** Verifier model id. Defaults to `gemini-2.5-flash`. */
+  model?: string
+  /** HTTP backend. Defaults to `vertex_ai`. */
+  provider?: VerifierProvider
+  /** Credential env name resolved through `ctx.credentials` then `process.env`. */
+  apiKeyEnv?: string
+  /** Optional generateContent or OpenAI-compatible chat base URL. */
+  baseUrl?: string
+  /** PPT pivot count. Defaults to `2`. */
+  pivots?: number
+  /** Directed-reward repeats K. Defaults to `4`. */
+  nVerifications?: number
+  /** PPT ring seed. Defaults to `0`. */
+  seed?: number
+  /** Optional ground-truth note prepended to the verifier prompt. */
+  note?: string
+  /** Criteria list; empty uses TurboAgent's Task Success default. */
+  criteria?: CriterionConfig[]
+}
+
+/** Optional pre-step context refinement. `prompt` must contain `{context}`. */
+export interface RefinementConfig {
+  /** Provider route for the auxiliary refinement completion. */
+  provider: string
+  /** Model id for the auxiliary refinement completion. */
+  model: string
+  /** Prompt template; `{context}` is replaced with formatted history. */
+  prompt: string
+}
+
+/** Optional post-hoc progress monitor. */
+export interface ProgressMonitorConfig {
+  /** Progress-scoring repeats K. Defaults to `4`. */
+  nVerifications?: number
+}
+
+/** Verifier HTTP backend selected by config. */
+export type VerifierProvider = 'vertex_ai' | 'openai_compatible'
+
+/** One configured PPT criterion. */
+export interface CriterionConfig {
+  /** Optional stable id; empty values slug from `name`. */
+  id?: string
+  /** Display name used in the verifier prompt. */
+  name: string
+  /** Criterion text appended to the verifier prompt. */
+  description: string
+}
+```
+
+Source: [`packages/experimental/llm-turbo/src/index.ts:105`](../packages/experimental/llm-turbo/src/index.ts)
+
 <a id="deepseek-aidsh-experimental-tool-agent-team"></a>
 
 ## `@deepseek-ai/dsh-experimental-tool-agent-team`
