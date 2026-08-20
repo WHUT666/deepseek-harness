@@ -408,17 +408,17 @@ export function extractProgressScores(
     const match = new RegExp(`<c${i}>\\s*([A-Ta-t])\\s*</c${i}>`).exec(text)
     const letter = match?.[1]
     if (letter !== undefined) {
-      const value = PROGRESS_LETTER_VALUE[letter]
-      if (value !== undefined) scores[i - 1] = value
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- the capture is A-T or a-t
+      scores[i - 1] = PROGRESS_LETTER_VALUE[letter]!
     }
   }
   if (scores.some(score => score === null)) {
     const bare = text.split('\n').map(line => line.trim()).filter(line => line.length === 1 && line in PROGRESS_LETTER_VALUE)
     if (bare.length === n) {
-      for (let i = 0; i < n; i++) {
-        const letter = bare[i]
-        const value = letter === undefined ? undefined : PROGRESS_LETTER_VALUE[letter]
-        if (scores[i] === null && value !== undefined) scores[i] = value
+      for (const [i, letter] of bare.entries()) {
+        if (scores[i] !== null) continue
+        // oxlint-disable-next-line typescript/no-non-null-assertion -- bare rows are keys of PROGRESS_LETTER_VALUE
+        scores[i] = PROGRESS_LETTER_VALUE[letter]!
       }
     }
   }
