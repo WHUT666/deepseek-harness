@@ -1,0 +1,18 @@
+# Exercise the model-facing Fluent tool through the shipped ACP app and Loader entry path.
+# The configured command is deliberately missing so probe stays keyless and host-independent.
+- id: base
+  name: '@deepseek-ai/cordis-plugin-include'
+  config:
+    path: ../cordis.yml
+    patches:
+      - insert:
+          - id: fluent
+            name: '@deepseek-ai/dsh-fluent'
+          - id: fluent-local
+            name: '@deepseek-ai/dsh-fluent-local'
+            config:
+              command: ./missing-fluent
+          - id: timeout-policy
+            name: '@deepseek-ai/dsh-tool-call-timeout-policy'
+          - id: tool-fluent
+            name: '@deepseek-ai/dsh-tool-fluent'

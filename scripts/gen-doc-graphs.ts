@@ -74,6 +74,7 @@ const GROUP_ORDER = [
   'sandbox',
   'e2b',
   'fs',
+  'fluent',
   'skill',
   'compact',
   'subagent',
@@ -555,6 +556,15 @@ const SERVICE_ROLES: ServiceRole[] = [
     implementations: ['lsp-local'],
     consumers: ['tool-lsp'],
     note: 'Provider registration and selection plus normalized query execution over exactly four operations; the seam offers no protocol escape hatch, so a backend translates into the normalized request and result.',
+  },
+  {
+    key: 'fluent',
+    pkg: 'fluent',
+    title: 'ANSYS Fluent batch seam',
+    mode: 'seam',
+    implementations: ['fluent-local'],
+    consumers: ['tool-fluent'],
+    note: 'Provider registration and selection plus normalized probe/runJournal execution; the seam offers no solver CLI escape hatch, so a backend translates into the normalized request and result.',
   },
   {
     key: 'apiProxy',

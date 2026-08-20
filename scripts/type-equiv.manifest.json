@@ -1476,6 +1476,46 @@
       "source": "packages/lsp/lsp/src/types.ts"
     },
     {
+      "doc": "docs/subsystems/fluent.md",
+      "symbol": "FluentOperation",
+      "source": "packages/fluent/fluent/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/fluent.md",
+      "symbol": "FluentDimension",
+      "source": "packages/fluent/fluent/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/fluent.md",
+      "symbol": "FluentRequest",
+      "source": "packages/fluent/fluent/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/fluent.md",
+      "symbol": "FluentProbeResult",
+      "source": "packages/fluent/fluent/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/fluent.md",
+      "symbol": "FluentRunResult",
+      "source": "packages/fluent/fluent/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/fluent.md",
+      "symbol": "FluentResult",
+      "source": "packages/fluent/fluent/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/fluent.md",
+      "symbol": "FluentProvider",
+      "source": "packages/fluent/fluent/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/fluent.md",
+      "symbol": "FluentService",
+      "source": "packages/fluent/fluent/src/types.ts"
+    },
+    {
       "doc": "docs/subsystems/persistence.md",
       "symbol": "SessionPersistenceRevision",
       "source": "packages/session/session-persistence/src/revision.ts"

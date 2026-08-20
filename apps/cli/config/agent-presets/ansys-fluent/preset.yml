@@ -1,0 +1,3 @@
+name: ANSYS Fluent
+description: 面向 ANSYS Fluent 的编码 Agent：在标准模式之上增加本地批量求解、journal 运行与 Fluent skills。
+order: 5
