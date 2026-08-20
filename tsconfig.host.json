@@ -277,6 +277,7 @@
     { "path": "./packages/jobs/tool-jobs" },
     { "path": "./packages/experimental/agent-team" },
     { "path": "./packages/experimental/tool-agent-team" },
+    { "path": "./packages/experimental/llm-turbo" },
     { "path": "./packages/workflow/workflow" },
     { "path": "./packages/workflow/workflow-worker-thread" },
     { "path": "./packages/workflow/tool-workflow" },

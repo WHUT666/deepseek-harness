@@ -312,7 +312,23 @@ interface SurfaceIntent {
 }
 ```
 
-Required for `SurfaceEventType` events — every message-producing event must declare how it joins the surface, the sole source of derived model history. A human-facing transcript is the other projection and reads the log's append-origin events instead, because the surface deliberately shadows the ranges a replacement summarizes (`isAppendSurfaceEvent` in [dsh-session](../../packages/core/session/README.md)). Non-surface types reject it at compile time.
+```ts type-equiv
+/**
+ * Optional envelope fields {@link Session.append} accepts on every event type.
+ * Surface events still require {@link SurfaceIntent}; log-only events may pass
+ * only this object.
+ */
+interface SessionAppendOptions {
+  /**
+   * Marks a purely informational event a reader may skip when it does not
+   * recognize `type`. Writers set `true` only when losing the record cannot
+   * change how the rest of the log is reconstructed.
+   */
+  ignorable?: true
+}
+```
+
+Required for `SurfaceEventType` events — every message-producing event must declare how it joins the surface, the sole source of derived model history. A human-facing transcript is the other projection and reads the log's append-origin events instead, because the surface deliberately shadows the ranges a replacement summarizes (`isAppendSurfaceEvent` in [dsh-session](../../packages/core/session/README.md)). Non-surface types reject it at compile time. `Session.append` also accepts {@link SessionAppendOptions} on every type so a writer can mark a purely informational record `ignorable`.
 
 Only `assistant/message` may carry a present empty `sourceEventSeqs`; when the field is absent, the event does not record which earlier events produced the message, and the provider may still have emitted chunks.
 
@@ -448,14 +464,14 @@ declare class Session {
    *
    * @param type - The event type (key of {@link SessionEventMap}).
    * @param data - The event payload; must be JSON-serializable.
-   * @param opts - Surface metadata: `surfaceOp` controls how the event enters
-   *   the ordered surface; `sourceEventSeqs` lists the seq numbers of earlier
-   *   events this one derives from. REQUIRED for
-   *   {@link SurfaceEventType} events (every message-producing event must
+   * @param opts - Surface metadata plus optional envelope flags. `surfaceOp`
+   *   controls how the event enters the ordered surface; `sourceEventSeqs`
+   *   lists the seq numbers of earlier events this one derives from. REQUIRED
+   *   for {@link SurfaceEventType} events (every message-producing event must
    *   declare how it joins the surface, the sole source of derived model
-   *   history) and
-   *   rejected by the compiler for non-surface types like `turn/start` or
-   *   `assistant/chunk`.
+   *   history) and rejected by the compiler for non-surface types like
+   *   `turn/start` or `assistant/chunk`. `ignorable: true` marks a purely
+   *   informational record a reader may skip when it does not recognize `type`.
    * @returns the logged event — its assigned `seq`/`time` plus the SNAPSHOT of
    *   `data` that entered the log, so reading `event.data` back sees the logged
    *   value, never the caller's still-mutable input.
@@ -476,7 +492,9 @@ declare class Session {
   append<T extends SessionEventType>(
     type: T,
     data: SessionEventMap[T],
-    ...opts: T extends SurfaceEventType ? [opts: SurfaceIntent] : []
+    ...opts: T extends SurfaceEventType
+      ? [opts: SurfaceIntent & SessionAppendOptions]
+      : [opts?: SessionAppendOptions]
   ): SessionEvent<T>;
   /**
    * The {@link EpochHeader} in force after the log's last header event — the

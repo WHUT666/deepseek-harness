@@ -322,6 +322,36 @@
       "source": "packages/experimental/agent-team/src/types.ts"
     },
     {
+      "doc": "docs/subsystems/llm-turbo.md",
+      "symbol": "LlmTurboCandidate",
+      "source": "packages/experimental/llm-turbo/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/llm-turbo.md",
+      "symbol": "LlmTurboCandidatesEventData",
+      "source": "packages/experimental/llm-turbo/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/llm-turbo.md",
+      "symbol": "LlmTurboVerdictMethod",
+      "source": "packages/experimental/llm-turbo/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/llm-turbo.md",
+      "symbol": "LlmTurboComparison",
+      "source": "packages/experimental/llm-turbo/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/llm-turbo.md",
+      "symbol": "LlmTurboVerdictEventData",
+      "source": "packages/experimental/llm-turbo/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/llm-turbo.md",
+      "symbol": "LlmTurboProgressEventData",
+      "source": "packages/experimental/llm-turbo/src/types.ts"
+    },
+    {
       "doc": "docs/subsystems/commands.md",
       "symbol": "CommandInputDescriptor",
       "source": "packages/interaction/commands/src/types.ts"
@@ -481,6 +511,11 @@
     {
       "doc": "docs/subsystems/session.md",
       "symbol": "SurfaceIntent",
+      "source": "packages/core/session/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/session.md",
+      "symbol": "SessionAppendOptions",
       "source": "packages/core/session/src/types.ts"
     },
     {

@@ -8,5 +8,6 @@
 |---|---|---|
 | `agent-team/` | 隐式 root Agent Teams roster、持久 peer mailbox、共享任务 DAG 与运行时协调 | `ctx.agentTeams` |
 | `tool-agent-team/` | 按 Agent 作用域提供的 Agent Teams 模型工具与协作指引 | — |
+| `llm-turbo/` | 显式启用的 loop 流 best-of-N 包装：多数票与 PPT 验证器选优 | — |
 
 [子树规则](AGENTS.md)规定依赖隔离、发布排除与 promotion。

@@ -393,6 +393,20 @@ export interface SurfaceIntent {
 }
 
 /**
+ * Optional envelope fields {@link Session.append} accepts on every event type.
+ * Surface events still require {@link SurfaceIntent}; log-only events may pass
+ * only this object.
+ */
+export interface SessionAppendOptions {
+  /**
+   * Marks a purely informational event a reader may skip when it does not
+   * recognize `type`. Writers set `true` only when losing the record cannot
+   * change how the rest of the log is reconstructed.
+   */
+  ignorable?: true
+}
+
+/**
  * One immutable entry in the session log.
  *
  * A proper discriminated union over `type` (not independent `type`/`data`
