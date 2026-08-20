@@ -171,7 +171,7 @@ export async function completeVerifier(
         logprobs: true,
         top_logprobs: 20,
       }),
-      signal,
+      ...signal === undefined ? {} : { signal },
     }))
   }
 
@@ -191,6 +191,6 @@ export async function completeVerifier(
         thinkingConfig: { thinkingBudget: 0 },
       },
     }),
-    signal,
+    ...signal === undefined ? {} : { signal },
   }))
 }

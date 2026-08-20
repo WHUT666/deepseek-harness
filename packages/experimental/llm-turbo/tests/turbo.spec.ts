@@ -692,7 +692,7 @@ describe('llm-turbo wrapper', () => {
     }, {
       scoreProgress: async (_h, _a, signal) => {
         started.resolve(undefined)
-        await new Promise<void>((resolve, reject) => {
+        await new Promise<void>((_, reject) => {
           signal?.addEventListener('abort', () => {
             reject(new Error('late'))
           })

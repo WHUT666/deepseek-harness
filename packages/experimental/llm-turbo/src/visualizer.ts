@@ -133,6 +133,8 @@ export function projectVisualizerEntries(sessions: readonly Session[]): TurboVis
     for (const event of session.events) {
       if (event.type !== 'llm/turbo-candidates') continue
       const key = `${event.data.turn}:${event.data.step}`
+      const verdict = verdicts.get(key)
+      const progressRow = progress.get(key)
       entries.push({
         id: `${session.id}:${event.data.turn}:${event.data.step}`,
         sessionId: session.id,
@@ -140,8 +142,8 @@ export function projectVisualizerEntries(sessions: readonly Session[]): TurboVis
         step: event.data.step,
         timestamp: event.time,
         candidates: event.data,
-        ...verdicts.has(key) ? { verdict: verdicts.get(key) } : {},
-        ...progress.has(key) ? { progress: progress.get(key) } : {},
+        ...verdict === undefined ? {} : { verdict },
+        ...progressRow === undefined ? {} : { progress: progressRow },
       })
     }
   }
@@ -257,12 +259,13 @@ export function buildGraph(entry: TurboRequestLogEntry): { nodes: TurboGraphNode
   for (const [index] of entry.responses.entries()) {
     const id = `response-${index}`
     responseIds.push(id)
+    const score = entry.verifier.scores?.find(row => row.index === index)?.score
     nodes.push({
       id,
       label: `Response ${index}`,
       nodeType: 'response',
       isBest: entry.verifier.bestIndex === index,
-      score: entry.verifier.scores?.find(row => row.index === index)?.score,
+      ...score === undefined ? {} : { score },
     })
     edges.push({ id: `e-${prev}-${id}`, source: prev, target: id })
   }
@@ -299,7 +302,7 @@ export function buildGraph(entry: TurboRequestLogEntry): { nodes: TurboGraphNode
       id: 'progress',
       label: 'Progress Monitor',
       nodeType: 'progress',
-      score: entry.progressMonitor.score,
+      ...entry.progressMonitor.score === undefined ? {} : { score: entry.progressMonitor.score },
     })
     ranks.push(['progress'])
     edges.push({ id: `e-${preFinal}-progress`, source: preFinal, target: 'progress' })

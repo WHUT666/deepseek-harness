@@ -32,7 +32,7 @@ describe('fine-grained reward', () => {
 
   it('finds logprobs after the last score tag, including a truncated suffix', () => {
     const tokens = ['foo', '<score_A>', 'A', ' ']
-    const positionLogprobs = [[], [], [['A', 0]], []]
+    const positionLogprobs: Array<Array<readonly [string, number]>> = [[], [], [['A', 0]], []]
     expect(findTagLogprobs(tokens, positionLogprobs, '<score_A>')).toEqual([['A', 0]])
     expect(findTagLogprobs(['<score_A'], [[], [['B', -1]]], '<score_A>')).toEqual([['B', -1]])
     expect(findTagLogprobs(['<score_A>', undefined as unknown as string, 'A'], [[], [], [['A', 0]]], '<score_A>')).toEqual([['A', 0]])
@@ -43,7 +43,7 @@ describe('fine-grained reward', () => {
 
   it('extracts a letter-scale score from logprobs, tags, or 0.5', () => {
     const tokens = ['<score_A>', 'A']
-    const positionLogprobs = [[], [['>A', 0], ['T', -10]]]
+    const positionLogprobs: Array<Array<readonly [string, number]>> = [[], [['>A', 0], ['T', -10]]]
     expect(extractScore('', tokens, positionLogprobs, '<score_A>')).toBeGreaterThan(0.9)
     expect(extractScore('<score_B> t </score_B>', undefined, undefined, '<score_B>')).toBe(0)
     expect(extractScore('<score_A> nope </score_A>', undefined, undefined, '<score_A>')).toBe(0.5)

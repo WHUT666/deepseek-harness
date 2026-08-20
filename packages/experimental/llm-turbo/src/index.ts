@@ -143,15 +143,19 @@ const progressSchema = z.object({
   nVerifications: z.number().step(1).min(1).default(4),
 })
 
+/** Keep omitted nested YAML blocks `undefined` instead of schemastery's `{}`. */
+function optionalBlock<T>(schema: z<T>): z<T | undefined> {
+  return schema.default(undefined as T) as z<T | undefined>
+}
+
 /** Runtime schema for {@link Config}. */
 export const Config: z<Config> = z.object({
   numCandidates: z.number().step(1).min(1).default(1),
   majorityVoting: z.boolean().default(false),
-  // schemastery objects default to `{}`; override so omitted YAML blocks stay undefined.
-  verifier: verifierSchema.default(undefined),
-  refinement: refinementSchema.default(undefined),
-  progressMonitor: progressSchema.default(undefined),
-})
+  verifier: optionalBlock(verifierSchema),
+  refinement: optionalBlock(refinementSchema),
+  progressMonitor: optionalBlock(progressSchema),
+}) as z<Config>
 
 interface ResolvedVerifier {
   model: string

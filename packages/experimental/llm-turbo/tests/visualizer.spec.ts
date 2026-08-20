@@ -107,6 +107,11 @@ describe('turbo visualizer', () => {
     const noProgress = buildGraph(baseLog())
     expect(noProgress.nodes.some(node => node.id === 'progress')).toBe(false)
 
+    const progressWithoutScore = buildGraph(baseLog({
+      progressMonitor: { enabled: true },
+    }))
+    expect(progressWithoutScore.nodes.find(node => node.id === 'progress')?.score).toBeUndefined()
+
     const emptyReflection = buildGraph(baseLog({
       reflection: { enabled: true },
       responses: [],

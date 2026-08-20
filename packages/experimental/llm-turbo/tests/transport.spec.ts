@@ -148,7 +148,7 @@ describe('verifier transport', () => {
       json: async () => {
         throw 'bad-json'
       },
-    }) as Response
+    }) as unknown as Response
     await expect(completeVerifier({
       provider: 'vertex_ai', model: 'm', apiKey: 'k',
     }, 'p', stringJson)).rejects.toMatchObject({ code: 'VERIFIER_HTTP', message: 'bad-json' })
