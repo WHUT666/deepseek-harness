@@ -30,6 +30,7 @@ This table connects model-visible tool names to the plugin package and service s
 | `@deepseek-ai/dsh-tool-goal` | `create_goal`, `get_goal`, `update_goal` | `ctx.tools`, `ctx.agents`, `ctx.goals`, `ctx.systemPrompt`, `a calling Agent in an authorized open turn` | `tool/call`, `goal/change for mutations`, `tool/result` | - | create, edit, pause, and resume require direct-human root authority; complete and blocked also accept the exact current goal round. The default blocked lower bound is three admitted rounds. |
 | `@deepseek-ai/dsh-schedule` | `schedule_create`, `schedule_delete`, `schedule_list` | `ctx.tools`, `ctx.sessions`, `Session persistence`, `a future live root Agent` | `tool/call`, `schedule/change create or delete`, `tool/result` | - | Registered only inside live root Agent scopes created after the opt-in Schedule plugin loads. Version 1 accepts after_seconds, explicit absolute at, and bounded fixed-rate every_seconds, and discloses session-local delivery; management reads and mutations require the shared Session persistence barrier. |
 | `@deepseek-ai/dsh-tool-lsp` | `lsp` | `ctx.tools`, `ctx.lsp`, `ctx.systemPrompt` | `tool/call`, `tool/result` | - | The lsp tool keeps provider selection and language-server subprocesses behind ctx.lsp, so its model-visible schema stays stable across providers. Requires a registered provider (e.g. `@deepseek-ai/dsh-lsp-stdio`) at runtime; without one, a query returns the structured `LSP_UNAVAILABLE` error rather than changing the schema. |
+| `@deepseek-ai/dsh-tool-fluent` | `fluent` | `ctx.tools`, `ctx.fluent`, `ctx.systemPrompt`, `ctx.jobs at call time for run_in_background` | `tool/call`, `tool/result` | - | The fluent tool keeps provider selection and solver subprocesses behind ctx.fluent, so its model-visible schema stays stable across providers. Requires a registered provider (e.g. `@deepseek-ai/dsh-fluent-local`) at runtime; without one, a call returns the structured `FLUENT_PROVIDER_UNAVAILABLE` error rather than changing the schema. A `run_in_background` run registers with the generic `ctx.jobs` runtime and is collected/stopped through the `job_*` tools from `@deepseek-ai/dsh-tool-jobs`; the `enableRunInBackground` config (default true) removes the parameter entirely when disabled. |
 | `@deepseek-ai/dsh-tool-ralph` | `ralph` | `ctx.tools`, `ctx.workflowEngine`, `ctx.subagents`, `ctx.systemPrompt`, `a calling Agent (exec.agent parents every fresh round)` | `tool/call`, `tool/result`, `workflow and child session events during execution` | - | A fixed foreground workflow starts one fresh structured child per round; the model selects only the immutable objective and an optional round cap. |
 | `@deepseek-ai/dsh-tool-skill` | `skill` | `ctx.tools`, `ctx.agents`, `ctx.skills` | `tool/call`, `tool/result`, `user/message replacement catalogs via agent.inject()` | - | - |
 | `@deepseek-ai/dsh-tool-session-query` | `session_event_read`, `session_event_search`, `session_event_trace`, `session_search`, `session_trace` | `ctx.tools`, `ctx.systemPrompt`, `ctx.sessionQuery`, `a calling Agent for workspace authority` | `tool/call`, `tool/result` | - | The five read-only tools hide provider cursors and authorize every result from the immutable calling agent session. The package is opt-in; compositions that need enforced deadlines or bounded inline output also mount the generic timeout or spill policies. |
@@ -1205,6 +1206,59 @@ Query a language server for precise code navigation. operation is one of goToDef
 Source: [`packages/lsp/tool-lsp/src/index.ts`](../packages/lsp/tool-lsp/src/index.ts)
 
 The lsp tool keeps provider selection and language-server subprocesses behind ctx.lsp, so its model-visible schema stays stable across providers. Requires a registered provider (e.g. `@deepseek-ai/dsh-lsp-stdio`) at runtime; without one, a query returns the structured `LSP_UNAVAILABLE` error rather than changing the schema.
+
+<a id="deepseek-aidsh-tool-fluent"></a>
+
+## `@deepseek-ai/dsh-tool-fluent`
+
+### `fluent`
+
+Probe the local ANSYS Fluent installation or run one Scheme/TUI journal in batch. operation is probe or runJournal. runJournal requires journal_path. dimension is optional (2d, 3d, 2ddp, 3ddp). processors is an optional parallel process count. Set run_in_background: true for long iterate/solve runs: the call returns a job id immediately; read its output with job_output and stop it with job_kill.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "operation": {
+      "type": "string",
+      "description": "probe or runJournal.",
+      "enum": [
+        "probe",
+        "runJournal"
+      ]
+    },
+    "journal_path": {
+      "type": "string",
+      "description": "Journal file for runJournal, relative to the workspace or absolute."
+    },
+    "dimension": {
+      "type": "string",
+      "description": "Batch dimension for runJournal. Defaults to the provider configuration (3d).",
+      "enum": [
+        "2d",
+        "3d",
+        "2ddp",
+        "3ddp"
+      ]
+    },
+    "processors": {
+      "type": "integer",
+      "description": "Parallel solver processes for runJournal. Omit to use the provider default (no -t when unset)."
+    },
+    "run_in_background": {
+      "type": "boolean",
+      "description": "Run the journal in the background and return a job id immediately (collect with job_output, stop with job_kill). No timeout applies. Required for long iterate/solve runs."
+    }
+  },
+  "required": [
+    "operation"
+  ]
+}
+```
+
+Source: [`packages/fluent/tool-fluent/src/index.ts`](../packages/fluent/tool-fluent/src/index.ts)
+
+The fluent tool keeps provider selection and solver subprocesses behind ctx.fluent, so its model-visible schema stays stable across providers. Requires a registered provider (e.g. `@deepseek-ai/dsh-fluent-local`) at runtime; without one, a call returns the structured `FLUENT_PROVIDER_UNAVAILABLE` error rather than changing the schema. A `run_in_background` run registers with the generic `ctx.jobs` runtime and is collected/stopped through the `job_*` tools from `@deepseek-ai/dsh-tool-jobs`; the `enableRunInBackground` config (default true) removes the parameter entirely when disabled.
 
 <a id="deepseek-aidsh-tool-ralph"></a>
 

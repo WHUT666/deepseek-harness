@@ -250,6 +250,7 @@
         "./packages/code-runtime/*/src",
         "./packages/fs/*/src",
         "./packages/lsp/*/src",
+        "./packages/fluent/*/src",
         "./packages/skill/*/src",
         "./packages/compaction/*/src",
         "./packages/context/*/src",

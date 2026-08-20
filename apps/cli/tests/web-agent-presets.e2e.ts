@@ -219,7 +219,7 @@ describe('the shipped Web composition', () => {
   it('supplies both shipped presets, and only those, from the system root', async () => {
     const listed = await ctx.agentPresets.list()
 
-    expect(listed.map(preset => preset.id).sort()).toEqual(['code', 'cordis', 'minimal', 'standard'])
+    expect(listed.map(preset => preset.id).sort()).toEqual(['ansys-fluent', 'code', 'cordis', 'minimal', 'standard'])
     expect(listed.every(preset => preset.trust === 'system')).toBe(true)
     expect(ctx.agentPresets.defaultId).toBe('standard')
   })
@@ -311,6 +311,25 @@ describe('the shipped Web composition', () => {
       const scoped = (await ctx.skills.list({ scope: handle.agent })).map(skill => skill.name)
       expect(scoped).toContain('editing-cordis-compositions')
       expect((await ctx.skills.list()).map(skill => skill.name)).not.toContain('editing-cordis-compositions')
+    } finally {
+      await handle.dispose()
+    }
+  })
+
+  it('composes the ansys-fluent agent with fluent tools and skills', async () => {
+    const handle = await ctx.agents.create({
+      sessionId: SessionId('preset-ansys-fluent'),
+      setup: agentCtx => ctx.agentPresets.mount(agentCtx, 'ansys-fluent').then(() => undefined),
+    })
+    try {
+      const tools = toolNames(ctx, handle.agent)
+      expect(tools).toContain('fluent')
+      expect(tools).toEqual(expect.arrayContaining(['read', 'edit', 'skill', 'job_output']))
+      const scoped = (await ctx.skills.list({ scope: handle.agent })).map(skill => skill.name)
+      expect(scoped).toEqual(expect.arrayContaining([
+        'fluent-journals', 'fluent-setup', 'fluent-udf', 'fluent-postprocess',
+      ]))
+      expect((await ctx.skills.list()).map(skill => skill.name)).not.toContain('fluent-journals')
     } finally {
       await handle.dispose()
     }

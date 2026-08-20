@@ -306,6 +306,9 @@
     { "path": "./packages/lsp/lsp" },
     { "path": "./packages/lsp/lsp-stdio" },
     { "path": "./packages/lsp/tool-lsp" },
+    { "path": "./packages/fluent/fluent" },
+    { "path": "./packages/fluent/fluent-local" },
+    { "path": "./packages/fluent/tool-fluent" },
     { "path": "./apps/cli" }
   ]
 }

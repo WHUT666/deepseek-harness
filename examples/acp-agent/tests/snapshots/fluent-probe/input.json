@@ -1,0 +1,7 @@
+{
+  "steps": [
+    { "op": "initialize" },
+    { "op": "newSession" },
+    { "op": "prompt", "text": "Use the fluent tool exactly once to probe the local ANSYS Fluent installation, then reply with exactly DONE." }
+  ]
+}
