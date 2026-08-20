@@ -28,8 +28,16 @@ afterEach(async () => {
 })
 
 /** Boot the three-package Fluent family through the real Loader. */
-async function boot(): Promise<Context> {
+async function boot(
+  resolveCommand: (dir: string) => Promise<string>,
+  resolveEnv?: (dir: string) => Promise<Record<string, string>>,
+): Promise<Context> {
   root = await mkdtemp(join(tmpdir(), 'dsh-fluent-loader-'))
+  const command = await resolveCommand(root)
+  const env = resolveEnv === undefined ? undefined : await resolveEnv(root)
+  const envYaml = env === undefined
+    ? []
+    : ['    env:', ...Object.entries(env).map(([key, value]) => `      ${key}: ${JSON.stringify(value)}`)]
   const configPath = join(root, 'cordis.yml')
   await writeFile(configPath, [
     "- name: '@deepseek-ai/dsh-system-prompt'",
@@ -38,7 +46,8 @@ async function boot(): Promise<Context> {
     "- name: '@deepseek-ai/dsh-fluent'",
     "- name: '@deepseek-ai/dsh-fluent-local'",
     '  config:',
-    '    command: ./missing-fluent',
+    `    command: ${JSON.stringify(command)}`,
+    ...envYaml,
     "- name: '@deepseek-ai/dsh-tool-fluent'",
     '',
   ].join('\n'))
@@ -70,11 +79,30 @@ async function boot(): Promise<Context> {
 
 describe('fluent Loader composition', () => {
   it('registers the fluent tool even when the local executable is missing', async () => {
-    const ctx = await boot()
+    const ctx = await boot(async () => 'dsh-missing-fluent-executable')
     expect(ctx.tools.get('fluent')).toBeDefined()
     const prompt = await ctx.systemPrompt.assemble()
     expect(prompt.sections.map(section => section.text).join('\n')).toContain(FLUENT_PROMPT_TEXT)
     const result = await ctx.fluent.run({ operation: 'probe', workspaceRoot: root! })
     expect(result).toEqual({ kind: 'probe', available: false })
+  })
+
+  it('runs a journal through an absolute fake executable', async () => {
+    const ctx = await boot(async (dir) => {
+      const fake = join(dir, 'fake-fluent.mjs')
+      await writeFile(fake, 'process.stdout.write("stdout-ok"); process.exit(0)\n')
+      await writeFile(join(dir, 'run.jou'), '(exit)\n')
+      return process.execPath
+    }, async dir => ({
+      NODE_OPTIONS: `--import ${pathToFileURL(join(dir, 'fake-fluent.mjs')).href}`,
+    }))
+    const result = await ctx.fluent.run({
+      operation: 'runJournal',
+      workspaceRoot: root!,
+      journalPath: 'run.jou',
+    })
+    expect(result).toMatchObject({ kind: 'run', exitCode: 0 })
+    if (result.kind !== 'run') throw new Error('expected run result')
+    expect(result.stdout).toContain('stdout-ok')
   })
 })

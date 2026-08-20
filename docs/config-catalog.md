@@ -649,6 +649,56 @@ export interface Config {
 
 Source: [`packages/context/file-reference-local/src/index.ts:35`](../packages/context/file-reference-local/src/index.ts)
 
+<a id="deepseek-aidsh-fluent"></a>
+
+## `@deepseek-ai/dsh-fluent`
+
+```ts config-catalog
+/**
+ * Config for the Fluent seam. `provider` pins which backend wins; it is
+ * optional (a single registered usable provider auto-selects).
+ */
+export interface FluentConfig {
+  /** Explicit provider id. Omitted = auto-select when exactly one usable. */
+  readonly provider?: string
+}
+```
+
+Source: [`packages/fluent/fluent/src/index.ts:68`](../packages/fluent/fluent/src/index.ts)
+
+<a id="deepseek-aidsh-fluent-local"></a>
+
+## `@deepseek-ai/dsh-fluent-local`
+
+Requires: `fluent` · `subprocess`
+
+```ts config-catalog
+/** Plugin config: executable, default dimension, graphics, and host bounds. */
+export interface Config {
+  /** Executable name or absolute path. Default `fluent`. */
+  command?: string
+  /** Extra env merged after the subprocess scrub. Default `{}`. */
+  env?: Record<string, string>
+  /** Default batch dimension. Default `3d`. */
+  dimension?: FluentDimension
+  /** Graphics flag. Default `gu` (no GUI, no graphics). Not model-visible. */
+  graphics?: FluentGraphics
+  /** Default parallel process count. Omit `-t` when unset. */
+  processors?: number
+  /** Per-stream in-memory collection cap. Default 256000. */
+  maxOutputBytes?: number
+  /** Tree-kill grace in milliseconds. Default 5000. */
+  graceMs?: number
+}
+
+/** Graphics flag Fluent's batch launcher accepts. */
+export type FluentGraphics = 'g' | 'gu'
+```
+
+Depends on: [`FluentDimension`](../packages/fluent/fluent/src/index.ts)
+
+Source: [`packages/fluent/fluent-local/src/index.ts:43`](../packages/fluent/fluent-local/src/index.ts)
+
 <a id="deepseek-aidsh-fs-local"></a>
 
 ## `@deepseek-ai/dsh-fs-local`
@@ -2508,6 +2558,26 @@ export interface Config {
 ```
 
 Source: [`packages/shell/tool-bash-persistent/src/index.ts:432`](../packages/shell/tool-bash-persistent/src/index.ts)
+
+<a id="deepseek-aidsh-tool-fluent"></a>
+
+## `@deepseek-ai/dsh-tool-fluent`
+
+Requires: `tools` · `fluent` · `systemPrompt`
+
+```ts config-catalog
+/** Plugin configuration: result cap, timeout budget, and background opt-out. */
+export interface Config {
+  /** Largest complete rendered result in characters, including truncation metadata (default 16000). */
+  maxResultChars?: number
+  /** Tool-call timeout budget in ms (default 600000). Foreground only. */
+  timeoutMs?: number
+  /** Expose `run_in_background` (default true); disabled calls are also rejected. */
+  enableRunInBackground?: boolean
+}
+```
+
+Source: [`packages/fluent/tool-fluent/src/index.ts:72`](../packages/fluent/tool-fluent/src/index.ts)
 
 <a id="deepseek-aidsh-tool-fs"></a>
 

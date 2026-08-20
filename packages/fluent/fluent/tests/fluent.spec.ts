@@ -3,9 +3,11 @@ import { Context } from '@deepseek-ai/cordis'
 import Fluent, {
   FluentError,
   FluentProviderId,
+  type FluentJournalHandle,
   type FluentProvider,
   type FluentRequest,
   type FluentResult,
+  type FluentRunResult,
 } from '@deepseek-ai/dsh-fluent'
 
 /** A scripted provider that records the requests it receives. */
@@ -26,6 +28,23 @@ function makeProvider(
       seenSignals.push(signal)
       return Promise.resolve(result)
     },
+    startJournal(request, signal) {
+      seen.push(request)
+      seenSignals.push(signal)
+      if (result.kind !== 'run') {
+        return Promise.reject(new Error('test provider has no journal result'))
+      }
+      return Promise.resolve(stubHandle(result))
+    },
+  }
+}
+
+/** A journal handle that immediately settles with the scripted run result. */
+function stubHandle(result: FluentRunResult): FluentJournalHandle {
+  return {
+    cancel() {},
+    done: Promise.resolve(result),
+    readOutput: () => ({ delta: '', truncated: false }),
   }
 }
 
@@ -154,6 +173,26 @@ describe('Fluent execution resolution', () => {
     await expect(fluent.run(journal)).resolves.toMatchObject({ kind: 'run', exitCode: 0 })
     expect(provider.seen[0]).toEqual(journal)
   })
+
+  it('forwards startJournal and its abort signal to the provider', async () => {
+    const { fluent } = await mountFluent()
+    const provider = makeProvider('local', available, {
+      kind: 'run',
+      exitCode: 0,
+      signal: null,
+      stdout: 'ok',
+      stderr: '',
+      truncated: false,
+    })
+    fluent.registerProvider(provider)
+    const controller = new AbortController()
+    const handle = await fluent.startJournal(journal, controller.signal)
+    expect(provider.seen[0]).toEqual(journal)
+    expect(provider.seenSignals[0]).toBe(controller.signal)
+    await expect(handle.done).resolves.toMatchObject({ kind: 'run', exitCode: 0 })
+    expect(handle.readOutput()).toEqual({ delta: '', truncated: false })
+    handle.cancel()
+  })
 })
 
 describe('Fluent request validation', () => {
@@ -176,6 +215,57 @@ describe('Fluent request validation', () => {
     fluent.registerProvider(makeProvider('local', available))
     await expect(fluent.run({ operation: 'gui' as never, workspaceRoot: '/ws' }))
       .rejects.toThrow(expect.objectContaining({ code: 'FLUENT_INVALID_REQUEST' }))
+  })
+
+  it('throws FLUENT_INVALID_REQUEST when processors is not a positive integer', async () => {
+    const { fluent } = await mountFluent()
+    fluent.registerProvider(makeProvider('local', available))
+    await expect(fluent.run({ ...journal, processors: 0 }))
+      .rejects.toThrow(expect.objectContaining({ code: 'FLUENT_INVALID_REQUEST' }))
+    await expect(fluent.run({ ...journal, processors: 1.5 }))
+      .rejects.toThrow(expect.objectContaining({ code: 'FLUENT_INVALID_REQUEST' }))
+  })
+
+  it('throws FLUENT_INVALID_REQUEST when probe carries processors', async () => {
+    const { fluent } = await mountFluent()
+    fluent.registerProvider(makeProvider('local', available))
+    await expect(fluent.run({ ...probe, processors: 4 }))
+      .rejects.toThrow(expect.objectContaining({ code: 'FLUENT_INVALID_REQUEST' }))
+  })
+
+  it('throws FLUENT_INVALID_REQUEST when startJournal is not a journal run', async () => {
+    const { fluent } = await mountFluent()
+    fluent.registerProvider(makeProvider('local', available))
+    await expect(fluent.startJournal(probe))
+      .rejects.toThrow(expect.objectContaining({ code: 'FLUENT_INVALID_REQUEST' }))
+  })
+
+  it('throws FLUENT_INVALID_REQUEST when startJournal has an empty workspaceRoot', async () => {
+    const { fluent } = await mountFluent()
+    fluent.registerProvider(makeProvider('local', available))
+    await expect(fluent.startJournal({ operation: 'runJournal', workspaceRoot: '  ', journalPath: 'run.jou' }))
+      .rejects.toThrow(expect.objectContaining({ code: 'FLUENT_INVALID_REQUEST' }))
+  })
+
+  it('throws FLUENT_INVALID_REQUEST when startJournal omits journalPath', async () => {
+    const { fluent } = await mountFluent()
+    fluent.registerProvider(makeProvider('local', available))
+    await expect(fluent.startJournal({ operation: 'runJournal', workspaceRoot: '/ws' }))
+      .rejects.toThrow(expect.objectContaining({ code: 'FLUENT_INVALID_REQUEST' }))
+  })
+
+  it('honors DSH_FLUENT_PROVIDER when config.provider is omitted', async () => {
+    const previous = process.env.DSH_FLUENT_PROVIDER
+    process.env.DSH_FLUENT_PROVIDER = 'remote'
+    try {
+      const { fluent } = await mountFluent()
+      fluent.registerProvider(makeProvider('local', available, { kind: 'probe', available: true, executable: 'local' }))
+      fluent.registerProvider(makeProvider('remote', available, { kind: 'probe', available: true, executable: 'remote' }))
+      await expect(fluent.run(probe)).resolves.toMatchObject({ executable: 'remote' })
+    } finally {
+      if (previous === undefined) delete process.env.DSH_FLUENT_PROVIDER
+      else process.env.DSH_FLUENT_PROVIDER = previous
+    }
   })
 })
 

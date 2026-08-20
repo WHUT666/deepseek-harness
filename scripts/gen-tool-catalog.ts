@@ -413,14 +413,14 @@ const TOOL_PACKAGES: ToolPackage[] = [
     pkg: '@deepseek-ai/dsh-tool-fluent',
     dir: 'tool-fluent',
     source: 'packages/fluent/tool-fluent/src/index.ts',
-    requires: ['ctx.tools', 'ctx.fluent', 'ctx.systemPrompt'],
+    requires: ['ctx.tools', 'ctx.fluent', 'ctx.systemPrompt', 'ctx.jobs at call time for run_in_background'],
     writes: ['tool/call', 'tool/result'],
     async mount(ctx) {
       await ctx.plugin(Fluent)
       await ctx.plugin(ToolFluent)
     },
     note:
-      'The fluent tool keeps provider selection and solver subprocesses behind ctx.fluent, so its model-visible schema stays stable across providers. Requires a registered provider (e.g. `@deepseek-ai/dsh-fluent-local`) at runtime; without one, a call returns the structured `FLUENT_PROVIDER_UNAVAILABLE` error rather than changing the schema.',
+      'The fluent tool keeps provider selection and solver subprocesses behind ctx.fluent, so its model-visible schema stays stable across providers. Requires a registered provider (e.g. `@deepseek-ai/dsh-fluent-local`) at runtime; without one, a call returns the structured `FLUENT_PROVIDER_UNAVAILABLE` error rather than changing the schema. A `run_in_background` run registers with the generic `ctx.jobs` runtime and is collected/stopped through the `job_*` tools from `@deepseek-ai/dsh-tool-jobs`; the `enableRunInBackground` config (default true) removes the parameter entirely when disabled.',
   },
   {
     pkg: '@deepseek-ai/dsh-tool-ralph',

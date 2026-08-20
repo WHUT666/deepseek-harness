@@ -5,7 +5,7 @@
  * @module @deepseek-ai/dsh-tool-fluent/render
  */
 
-import type { GenericCallView } from '@deepseek-ai/dsh-tools'
+import { ToolArgsError, type GenericCallView } from '@deepseek-ai/dsh-tools'
 import type {
   FluentDimension,
   FluentOperation,
@@ -22,11 +22,13 @@ export const FLUENT_DIMENSIONS: readonly FluentDimension[] = ['2d', '3d', '2ddp'
 /** Default cap on the complete rendered tool result, including truncation metadata. */
 export const DEFAULT_MAX_RESULT_CHARS = 16_000
 
-/** Validated `fluent` arguments after operation and path checks. */
+/** Validated `fluent` arguments after operation, path, and processors checks. */
 export interface FluentToolInput {
   readonly operation: FluentOperation
   readonly journalPath?: string
   readonly dimension?: FluentDimension
+  readonly processors?: number
+  readonly runInBackground: boolean
 }
 
 /** The raw, schema-typed argument shape. */
@@ -34,33 +36,48 @@ export interface FluentToolArgs {
   readonly operation: string
   readonly journal_path?: string
   readonly dimension?: string
+  readonly processors?: number
+  readonly run_in_background?: boolean
 }
 
 /**
  * Validate model arguments: `operation` must be one of the two; `runJournal`
- * requires a non-empty `journal_path`; `dimension` is optional and closed.
+ * requires a non-empty `journal_path`; `dimension` is optional and closed;
+ * `processors` is an optional positive integer for `runJournal` only;
+ * `run_in_background` is only valid for `runJournal`.
  * @param args - the schema-validated raw arguments.
  * @returns the validated input.
- * @throws Error when the operation is unknown or a journal path is missing.
+ * @throws ToolArgsError when the operation is unknown or a journal path is missing.
  */
 export function parseFluentArgs(args: FluentToolArgs): FluentToolInput {
   if (!isOperation(args.operation)) {
-    throw new Error(`operation must be one of ${FLUENT_OPERATIONS.join(', ')}`)
+    throw new ToolArgsError([`operation must be one of ${FLUENT_OPERATIONS.join(', ')}`])
   }
   if (args.dimension !== undefined && !isDimension(args.dimension)) {
-    throw new Error(`dimension must be one of ${FLUENT_DIMENSIONS.join(', ')}`)
+    throw new ToolArgsError([`dimension must be one of ${FLUENT_DIMENSIONS.join(', ')}`])
   }
-  if (args.operation === 'runJournal') {
-    if (args.journal_path === undefined || args.journal_path.trim() === '') {
-      throw new Error('journal_path is required for runJournal')
-    }
-    return {
-      operation: args.operation,
-      journalPath: args.journal_path,
-      ...args.dimension === undefined ? {} : { dimension: args.dimension },
-    }
+  if (args.processors !== undefined && (!Number.isInteger(args.processors) || args.processors < 1)) {
+    throw new ToolArgsError(['processors must be a positive integer'])
   }
-  return { operation: args.operation }
+  if (args.operation === 'probe') {
+    if (args.processors !== undefined) {
+      throw new ToolArgsError(['processors is only valid for runJournal'])
+    }
+    if (args.run_in_background === true) {
+      throw new ToolArgsError(['run_in_background is only valid for runJournal'])
+    }
+    return { operation: args.operation, runInBackground: false }
+  }
+  if (args.journal_path === undefined || args.journal_path.trim() === '') {
+    throw new ToolArgsError(['journal_path is required for runJournal'])
+  }
+  return {
+    operation: args.operation,
+    journalPath: args.journal_path,
+    runInBackground: args.run_in_background === true,
+    ...args.dimension === undefined ? {} : { dimension: args.dimension },
+    ...args.processors === undefined ? {} : { processors: args.processors },
+  }
 }
 
 /** Whether a string is one of the two operations. */
@@ -113,7 +130,7 @@ function capText(text: string, maxResultChars: number): string {
 }
 
 /**
- * UI presentation for a pending `fluent` call. Uses a generic search card; the
+ * UI presentation for a pending `fluent` call. Uses a generic execute card; the
  * title carries the operation and journal path when present.
  * @param args - the raw tool arguments.
  * @returns the generic call view.
@@ -124,7 +141,7 @@ export function presentFluentCall(args: FluentToolArgs): GenericCallView {
     : `Fluent ${args.operation}`
   return {
     card: 'generic',
-    kind: 'search',
+    kind: 'execute',
     title,
     ...args.journal_path === undefined ? {} : { locations: [{ path: args.journal_path }] },
   }

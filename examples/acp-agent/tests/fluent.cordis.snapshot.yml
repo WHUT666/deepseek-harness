@@ -13,7 +13,7 @@
           - id: fluent-local
             name: '@deepseek-ai/dsh-fluent-local'
             config:
-              command: ./missing-fluent
+              command: dsh-missing-fluent-executable
           - id: timeout-policy
             name: '@deepseek-ai/dsh-tool-call-timeout-policy'
           - id: tool-fluent

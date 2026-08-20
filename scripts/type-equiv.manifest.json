@@ -1507,6 +1507,16 @@
     },
     {
       "doc": "docs/subsystems/fluent.md",
+      "symbol": "FluentJournalRead",
+      "source": "packages/fluent/fluent/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/fluent.md",
+      "symbol": "FluentJournalHandle",
+      "source": "packages/fluent/fluent/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/fluent.md",
       "symbol": "FluentProvider",
       "source": "packages/fluent/fluent/src/types.ts"
     },

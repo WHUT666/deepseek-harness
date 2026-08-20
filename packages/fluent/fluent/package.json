@@ -1,7 +1,7 @@
 {
   "name": "@deepseek-ai/dsh-fluent",
   "description": "Abstract ANSYS Fluent capability seam (ctx.fluent) for the DeepSeek Harness — solver provider registry, registration-order-independent selection, probe/runJournal vocabulary, and the FluentError taxonomy",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },

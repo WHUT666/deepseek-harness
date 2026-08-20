@@ -15,6 +15,7 @@ import z from '@deepseek-ai/schemastery'
 import { HarnessError } from '@deepseek-ai/dsh-llm'
 import type { FluentProviderId } from './brand.ts'
 import type {
+  FluentJournalHandle,
   FluentProvider,
   FluentRequest,
   FluentResult,
@@ -24,6 +25,8 @@ import type {
 export { FluentProviderId } from './brand.ts'
 export type {
   FluentDimension,
+  FluentJournalHandle,
+  FluentJournalRead,
   FluentOperation,
   FluentProbeResult,
   FluentProvider,
@@ -44,7 +47,8 @@ declare module '@deepseek-ai/cordis' {
  * (`FLUENT_INVALID_PROVIDER`, `FLUENT_DUPLICATE_PROVIDER`,
  * `FLUENT_PROVIDER_UNAVAILABLE`, `FLUENT_PROVIDER_CONFIGURED_MISSING`,
  * `FLUENT_PROVIDER_CONFIGURED_UNAVAILABLE`, `FLUENT_PROVIDER_AMBIGUOUS`,
- * `FLUENT_INVALID_REQUEST`, …) that callers route on instead of parsing
+ * `FLUENT_INVALID_REQUEST`, `FLUENT_WORKSPACE_REQUIRED`,
+ * `FLUENT_MALFORMED_RESPONSE`) that callers route on instead of parsing
  * `message`.
  */
 export class FluentError extends HarnessError {}
@@ -68,7 +72,8 @@ export interface FluentConfig {
 
 /**
  * `ctx.fluent`. Holds the id reservations; selection resolves a usable
- * provider at each `run()` call and never depends on registration order.
+ * provider at each `run()` / `startJournal()` call and never depends on
+ * registration order.
  */
 export class Fluent extends Service implements FluentService {
   /**
@@ -105,24 +110,60 @@ export class Fluent extends Service implements FluentService {
 
   async run(request: FluentRequest, signal?: AbortSignal): Promise<FluentResult> {
     validateRequest(request)
-    const provider = resolveProvider({
+    const provider = this.selectProvider()
+    if (request.operation === 'runJournal') {
+      const handle = await provider.startJournal(request, signal)
+      return handle.done
+    }
+    return provider.run(request, signal)
+  }
+
+  async startJournal(request: FluentRequest, signal?: AbortSignal): Promise<FluentJournalHandle> {
+    validateJournalRequest(request)
+    return this.selectProvider().startJournal(request, signal)
+  }
+
+  private selectProvider(): FluentProvider {
+    return resolveProvider({
       providers: this.providers,
       ...this.configuredId !== undefined ? { configuredId: this.configuredId } : {},
     })
-    return provider.run(request, signal)
   }
 }
 
 /** Reject a journal run that names no journal, or an unknown operation. */
 function validateRequest(request: FluentRequest): void {
-  if (request.operation !== 'probe' && request.operation !== 'runJournal') {
-    throw new FluentError(`unknown Fluent operation "${String(request.operation)}"`, 'FLUENT_INVALID_REQUEST')
+  const operation: string = request.operation
+  if (operation !== 'probe' && operation !== 'runJournal') {
+    throw new FluentError(`unknown Fluent operation "${operation}"`, 'FLUENT_INVALID_REQUEST')
   }
   if (request.workspaceRoot.trim() === '') {
     throw new FluentError('workspaceRoot must be a non-empty string', 'FLUENT_INVALID_REQUEST')
   }
-  if (request.operation === 'runJournal' && (request.journalPath === undefined || request.journalPath.trim() === '')) {
+  if (request.operation === 'runJournal') validateJournalFields(request)
+  else if (request.processors !== undefined) {
+    throw new FluentError('processors applies only to runJournal', 'FLUENT_INVALID_REQUEST')
+  }
+}
+
+/** Reject a `startJournal` call that is not a valid journal run. */
+function validateJournalRequest(request: FluentRequest): void {
+  if (request.operation !== 'runJournal') {
+    throw new FluentError('startJournal requires operation runJournal', 'FLUENT_INVALID_REQUEST')
+  }
+  if (request.workspaceRoot.trim() === '') {
+    throw new FluentError('workspaceRoot must be a non-empty string', 'FLUENT_INVALID_REQUEST')
+  }
+  validateJournalFields(request)
+}
+
+/** Shared journal-path and processors checks. */
+function validateJournalFields(request: FluentRequest): void {
+  if (request.journalPath === undefined || request.journalPath.trim() === '') {
     throw new FluentError('runJournal requires a non-empty journalPath', 'FLUENT_INVALID_REQUEST')
+  }
+  if (request.processors !== undefined && (!Number.isInteger(request.processors) || request.processors < 1)) {
+    throw new FluentError('processors must be a positive integer', 'FLUENT_INVALID_REQUEST')
   }
 }
 

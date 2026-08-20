@@ -661,6 +661,31 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'fluent',
+    summary: 'The Fluent capability seam (`ctx.fluent`).',
+    description: 'The Fluent capability seam (`ctx.fluent`). Owns provider registration, selection, and normalized execution; exposes exactly the two operations and no solver CLI escape hatch.',
+    methods: [
+      {
+        signature: 'registerProvider(provider: FluentProvider): () => void',
+        description: 'Register a provider, atomically reserving its branded id. Any conflict or invalid input publishes nothing and throws `FluentError`; the returned disposer releases the reservation. Disposed with the calling fiber.',
+        parameters: [{ name: 'provider', description: 'the backend to register.' }],
+        returns: 'a synchronous disposer releasing the id.',
+      },
+      {
+        signature: 'run(request: FluentRequest, signal?: AbortSignal): Promise<FluentResult>',
+        description: 'Select a usable provider and run one operation. Selection is per call and order-independent; no usable provider throws `FluentError` `FLUENT_PROVIDER_UNAVAILABLE`. A journal run is `startJournal` then `done`.',
+        parameters: [{ name: 'request', description: 'the normalized request.' }, { name: 'signal', description: 'optional cancellation forwarded to the selected provider.' }],
+        returns: 'the normalized, closed-union result.',
+      },
+      {
+        signature: 'startJournal(request: FluentRequest, signal?: AbortSignal): Promise<FluentJournalHandle>',
+        description: 'Select a usable provider and spawn one journal. Requires `runJournal` and a journal path; no usable provider throws `FluentError` `FLUENT_PROVIDER_UNAVAILABLE`.',
+        parameters: [{ name: 'request', description: 'the normalized journal request.' }, { name: 'signal', description: 'optional cancellation forwarded to the selected provider.' }],
+        returns: 'a live journal handle.',
+      },
+    ],
+  },
+  {
     key: 'fs',
     summary: 'Abstract filesystem provider.',
     description: 'Abstract filesystem provider. Targets must preserve identity across aliases; reads expose regular UTF-8 text or typed errors, listings are stable and content-free, and mutations are atomic. Optional guards add stale protection without changing the unguarded provider contract.',
@@ -3167,6 +3192,46 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'FinishReasonMap',
     declaration: 'export interface FinishReasonMap {\n    \'stop\': {\n        kind: \'stop\';\n    };\n    \'tool-calls\': {\n        kind: \'tool-calls\';\n    };\n    \'max-tokens\': {\n        kind: \'max-tokens\';\n    };\n    \'aborted\': {\n        kind: \'aborted\';\n        failure: LlmFailure;\n    };\n    \'error\': {\n        kind: \'error\';\n        failure: LlmFailure;\n    };\n}',
+  },
+  {
+    name: 'FluentDimension',
+    declaration: 'export type FluentDimension = \'2d\' | \'3d\' | \'2ddp\' | \'3ddp\';',
+  },
+  {
+    name: 'FluentJournalHandle',
+    declaration: 'export interface FluentJournalHandle {\n    cancel(): void;\n    readonly done: Promise<FluentRunResult>;\n    readOutput(): FluentJournalRead;\n}',
+  },
+  {
+    name: 'FluentJournalRead',
+    declaration: 'export interface FluentJournalRead {\n    readonly delta: string;\n    readonly truncated: boolean;\n}',
+  },
+  {
+    name: 'FluentOperation',
+    declaration: 'export type FluentOperation = \'probe\' | \'runJournal\';',
+  },
+  {
+    name: 'FluentProbeResult',
+    declaration: 'export interface FluentProbeResult {\n    readonly kind: \'probe\';\n    readonly available: boolean;\n    readonly executable?: string;\n    readonly version?: string;\n}',
+  },
+  {
+    name: 'FluentProvider',
+    declaration: 'export interface FluentProvider {\n    readonly id: FluentProviderId;\n    available(): boolean;\n    run(request: FluentRequest, signal?: AbortSignal): Promise<FluentResult>;\n    startJournal(request: FluentRequest, signal?: AbortSignal): Promise<FluentJournalHandle>;\n}',
+  },
+  {
+    name: 'FluentProviderId',
+    declaration: 'export type FluentProviderId = Branded<\'FluentProviderId\'>;',
+  },
+  {
+    name: 'FluentRequest',
+    declaration: 'export interface FluentRequest {\n    readonly operation: FluentOperation;\n    readonly workspaceRoot: string;\n    readonly journalPath?: string;\n    readonly dimension?: FluentDimension;\n    readonly processors?: number;\n}',
+  },
+  {
+    name: 'FluentResult',
+    declaration: 'export type FluentResult = FluentProbeResult | FluentRunResult;',
+  },
+  {
+    name: 'FluentRunResult',
+    declaration: 'export interface FluentRunResult {\n    readonly kind: \'run\';\n    readonly exitCode: number | null;\n    readonly signal: string | null;\n    readonly stdout: string;\n    readonly stderr: string;\n    readonly truncated: boolean;\n}',
   },
   {
     name: 'FsDirEntry',

@@ -316,6 +316,25 @@ describe('the shipped Web composition', () => {
     }
   })
 
+  it('composes the ansys-fluent agent with fluent tools and skills', async () => {
+    const handle = await ctx.agents.create({
+      sessionId: SessionId('preset-ansys-fluent'),
+      setup: agentCtx => ctx.agentPresets.mount(agentCtx, 'ansys-fluent').then(() => undefined),
+    })
+    try {
+      const tools = toolNames(ctx, handle.agent)
+      expect(tools).toContain('fluent')
+      expect(tools).toEqual(expect.arrayContaining(['read', 'edit', 'skill', 'job_output']))
+      const scoped = (await ctx.skills.list({ scope: handle.agent })).map(skill => skill.name)
+      expect(scoped).toEqual(expect.arrayContaining([
+        'fluent-journals', 'fluent-setup', 'fluent-udf', 'fluent-postprocess',
+      ]))
+      expect((await ctx.skills.list()).map(skill => skill.name)).not.toContain('fluent-journals')
+    } finally {
+      await handle.dispose()
+    }
+  })
+
   it('presents `code` as Code Mode without disturbing a native session beside it', async () => {
     const coded = await ctx.agents.create({
       sessionId: SessionId('preset-code'),

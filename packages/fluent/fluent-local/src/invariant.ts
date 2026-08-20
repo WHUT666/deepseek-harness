@@ -15,9 +15,9 @@ export const name = 'fluent-local-invariant'
 export const inject = ['invariants']
 
 /**
- * No runtime invariant: executable caches and spawn handles are private
- * implementation state, and this provider publishes no independent lifecycle
- * event stream or enumerable snapshot.
+ * No runtime invariant: spawn handles are private implementation state, and
+ * this provider publishes no independent lifecycle event stream or enumerable
+ * snapshot.
  */
 const install: InvariantInstaller = () => {}
 

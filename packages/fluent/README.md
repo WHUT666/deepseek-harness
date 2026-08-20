@@ -10,7 +10,7 @@ The ANSYS Fluent capability seam: a Service Definition, a local batch solver pro
 | [`fluent-local/`](fluent-local/README.md) | Local batch backend over `ctx.subprocess` | (registers a provider on `ctx.fluent`) |
 | [`tool-fluent/`](tool-fluent/README.md) | Model-facing `fluent` tool | (registers on `ctx.tools`) |
 
-The Service Definition lives at `fluent/fluent/`. The seam exposes exactly two operations — `probe` and `runJournal` — and no free-form solver CLI escape hatch, so a provider swap does not change how the model asks for a version check or a journal run.
+The Service Definition lives at `fluent/fluent/`. The seam exposes exactly two operations — `probe` and `runJournal` — plus `startJournal` for a live journal handle. There is no free-form solver CLI escape hatch, so a provider swap does not change how the model asks for a version check or a journal run.
 
 The shipped `ansys-fluent` agent preset mounts this family in an entry-local realm and contributes Fluent skills. Other shipped presets do not load it.
 

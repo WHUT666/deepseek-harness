@@ -12,8 +12,24 @@ Write UDF C sources with file tools. Do not paste large UDF bodies into chat whe
 - Include `udf.h` and use the documented `DEFINE_*` macros.
 - Keep one concern per file when possible (one profile, one source term).
 - Match thread and domain assumptions to the journal that loads the library.
-- Prefer interpreted UDFs only for small, single-file experiments; compiled libraries belong in a journal `/define/user-defined/compiled-functions` sequence.
+- Prefer interpreted UDFs only for small, single-file experiments; compiled libraries belong in a journal compile/load sequence.
 
-## Loading
+## Compile and load (TUI)
 
 The journal, not the `fluent` tool, compiles and loads the UDF. After editing the `.c` file, update the journal and rerun `runJournal`.
+
+```
+/define/user-defined/compiled-functions
+compile
+libudf
+yes
+yes
+""
+"udf.c"
+""
+/define/user-defined/compiled-functions
+load
+libudf
+```
+
+Replace `udf.c` and `libudf` with the workspace source and library names. Do not treat this as a UDF tutorial; keep the C source in the file tools.

@@ -108,6 +108,48 @@
       }
     },
     {
+      "name": "fluent",
+      "description": "Probe the local ANSYS Fluent installation or run one Scheme/TUI journal in batch. operation is probe or runJournal. runJournal requires journal_path. dimension is optional (2d, 3d, 2ddp, 3ddp). processors is an optional parallel process count. Set run_in_background: true for long iterate/solve runs: the call returns a job id immediately; read its output with job_output and stop it with job_kill.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "description": "probe or runJournal.",
+            "enum": [
+              "probe",
+              "runJournal"
+            ]
+          },
+          "journal_path": {
+            "type": "string",
+            "description": "Journal file for runJournal, relative to the workspace or absolute."
+          },
+          "dimension": {
+            "type": "string",
+            "description": "Batch dimension for runJournal. Defaults to the provider configuration (3d).",
+            "enum": [
+              "2d",
+              "3d",
+              "2ddp",
+              "3ddp"
+            ]
+          },
+          "processors": {
+            "type": "integer",
+            "description": "Parallel solver processes for runJournal. Omit to use the provider default (no -t when unset)."
+          },
+          "run_in_background": {
+            "type": "boolean",
+            "description": "Run the journal in the background and return a job id immediately (collect with job_output, stop with job_kill). No timeout applies. Required for long iterate/solve runs."
+          }
+        },
+        "required": [
+          "operation"
+        ]
+      }
+    },
+    {
       "name": "get_goal",
       "description": "Read the current same-session goal, including its exact id/revision, objective, phase, completed continuation rounds, round limit, blocker reason when present, and whether another continuation is armed. Call this before updating a goal.",
       "parameters": {
@@ -198,43 +240,6 @@
             ]
           }
         }
-      }
-    },
-    {
-      "name": "lsp",
-      "description": "Query a language server for precise code navigation. operation is one of goToDefinition, findReferences, goToImplementation, hover. line and character are one-based UTF-16 cursor coordinates. findReferences includes the declaration.",
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "operation": {
-            "type": "string",
-            "description": "goToDefinition, findReferences, goToImplementation, or hover.",
-            "enum": [
-              "goToDefinition",
-              "findReferences",
-              "goToImplementation",
-              "hover"
-            ]
-          },
-          "file_path": {
-            "type": "string",
-            "description": "The source file to query, relative to the workspace or absolute."
-          },
-          "line": {
-            "type": "number",
-            "description": "One-based line of the cursor."
-          },
-          "character": {
-            "type": "number",
-            "description": "One-based UTF-16 column of the cursor."
-          }
-        },
-        "required": [
-          "operation",
-          "file_path",
-          "line",
-          "character"
-        ]
       }
     },
     {
